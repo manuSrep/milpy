@@ -18,7 +18,7 @@ import sklearn as skl
 from sklearn import metrics
 
 
-__all__ = ["make_scorer","get_scorer","accuracy_score","average_precision_score","f1_score","fbeta_score","negative_predictive_value","positive_predictive_value","precision_score","precision_recall_curve" "roc_auc_score","roc_curve","true_positive_rate","true_negative_rate"]
+__all__ = ["make_scorer","get_scorer","accuracy_score","average_precision_score","f1_score","fbeta_score","negative_predictive_value","positive_predictive_value","precision_score","precision_recall_curve", "roc_auc_score","roc_curve","true_positive_rate","true_negative_rate"]
 
 
 ################################################################################
@@ -366,13 +366,13 @@ def precision_recall_curve(z_true, z_score, y_true=None, y_score=None, pos_label
         Increasing thresholds on the decision function used to compute
         precision and recall.
     """
-    pre_z, rec_z, thresholds_z = skl.metrics.precison_recall_curve(z_true, z_score,
+    pre_z, rec_z, thresholds_z = skl.metrics.precision_recall_curve(z_true, z_score,
         pos_label=pos_label, sample_weight=None)
     if y_true is not None and y_score is not None:
-        pre_y, rec_y, thresholds_y = skl.metrics.precison_recall_curve(z_true, z_score,
+        pre_y, rec_y, thresholds_y = skl.metrics.precision_recall_curve(z_true, z_score,
             pos_label=pos_label, sample_weight=None)
     else:
-        fpre_y, rec_y, thresholds_y = None
+        pre_y = rec_y = thresholds_y = None
     return pre_z, rec_z, thresholds_z, pre_y, rec_y, thresholds_y
 
 def precision_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
@@ -794,7 +794,6 @@ class _PredictScorer():
         z_pred, y_pred = estimator.predict(data)
         return self._sign * self._score_func(data.z, z_pred, data.y, y_pred, **self._kwargs)
 
-
 class _ProbaScorer():
 
     def __init__(self, score_func, sign, kwargs):
@@ -822,7 +821,6 @@ class _ProbaScorer():
         """
         z_pred, y_pred = estimator.predict_proba(data)
         return self._sign * self._score_func(data.z, z_pred, data.y, y_pred, **self._kwargs)
-
 
 class _ThresholdScorer():
 

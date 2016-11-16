@@ -11,4 +11,3 @@ from __future__ import division, absolute_import, unicode_literals, print_functi
 
 from .milData import *
 from .gradient import *
-from .math_func import *

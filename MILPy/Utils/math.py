@@ -21,7 +21,8 @@ def sigmoid(x):
     Sigmoid function.
     """
     x = np.clip(x,-100,100)
-    return 1. / (1. + np.exp(-x))
+    res = 1. / (1. + np.exp(-x))
+    return np.round(res, 16)
 
 
 def d_sigmoid(x):

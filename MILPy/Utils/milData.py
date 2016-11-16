@@ -144,7 +144,6 @@ class milData():
         else:
             raise AttributeError("Attribute not found!")
 
-
     def get_B(self, key):
         """
         Get Bag with name 'key'.
@@ -159,7 +158,7 @@ class milData():
         ndarray
             The MilArray of one bag.
         """
-        return self._X[key], self._z[key], self._y[key]
+        return np.array(self._X[key]), np.array(self._z[key]), np.array(self._y[key])
 
 
     def get_x(self, n, key=None):
@@ -355,7 +354,6 @@ class milData():
         for k,v in self._X.items():
             self._N_X += len(v)
         self._map()
-
 
 
     def _sort_keys(self):

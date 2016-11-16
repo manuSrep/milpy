@@ -52,7 +52,7 @@ Functions
 """
 #from __future__ import division, print_function, absolute_import
 
-__all__ = ['minimize', 'minimize_scalar']
+#__all__ = ['minimize', 'minimize_scalar']
 
 from warnings import warn
 
@@ -61,7 +61,7 @@ import numpy as np
 from scipy._lib.six import callable
 
 # unconstrained minimization
-from ._optimizer import (_minimize_neldermead, _minimize_powell, _minimize_cg,
+from .optimizer import (_minimize_neldermead, _minimize_powell, _minimize_cg,
                        _minimize_bfgs, _minimize_newtoncg,
                        _minimize_scalar_brent, _minimize_scalar_bounded,
                        _minimize_scalar_golden, MemoizeJac, _follow)
