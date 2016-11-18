@@ -155,7 +155,7 @@ def rbfKernel_Mat(X, gamma):
     # Create GP covariance matrices
     K = np.exp(-gamma * sqFrobNorm) # instance level covariance matrix
     assert np.all(np.diag(K) == 1), "None 1 diagonal element in V"
-    K += np.identity(K.shape[0]) * 1e-7  # add some noise value to grantee a positive definite kernel
+    #K += np.identity(K.shape[0]) * 1e-7  # add some noise value to grantee a positive definite kernel
     assert not np.any(np.isnan(K)), 'NaN detected in covMat_K!'
     assert np.allclose(K,  K.T), 'covMat_K is not symmetric'
     assert np.all(np.linalg.eigvals(K) > 0), 'covMat_K is not positive definite'
@@ -204,17 +204,24 @@ def calcOmegas(data, gamma, tau,  metric):
             distMats[key] = distMat_Bag(data.get_B(key)[0], gamma, metric=metric)
             sumDistMats += np.sum(distMats[key])
             numDistMats += distMats[key].shape[0] * distMats[key].shape[1]
-            tau_ = sumDistMats / numDistMats
+        tau_mean = sumDistMats / numDistMats
 
         for i in range(data.N_B):
             key = data.keys[i]
+            omegas[key] = omega_Bag(distMats[key], tau_mean)
+    elif tau == "local":
+        tau_mean = []
+        for i in range(data.N_B):
+            key = data.keys[i]
+            distMats[key] = distMat_Bag(data.get_B(key)[0], gamma, metric=metric)
+            tau_ = np.mean(distMats[key])
+            tau_mean.append(tau_)
             omegas[key] = omega_Bag(distMats[key], tau_)
+        tau_mean = np.mean(tau_mean)
     else:
         for i in range(data.N_B):
             key = data.keys[i]
             distMats[key] = distMat_Bag(data.get_B(key)[0], gamma, metric=metric)
-            if tau == "local":
-                tau_ = np.mean(distMats[key])
             omegas[key] = omega_Bag(distMats[key], tau_)
-
-    return omegas
+        tau_mean = tau_
+    return omegas, tau_mean

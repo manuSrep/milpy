@@ -75,14 +75,14 @@ class miGraph(BaseEstimator):
         self.gamma = gamma
         self.tau = tau
         self.C = C
-
         self.degree = degree
         self.shrinking = shrinking
         self.probability = probability
         self.tol = tol
-        self.chache_size = cache_size
+        self.cache_size = cache_size
         self.max_iter = max_iter
         self.random_state = random_state
+
         self._data_train = None
         self._omegas_train = None
         self._kernel_train = None
@@ -139,10 +139,10 @@ class miGraph(BaseEstimator):
 
 
         self._data_train = data
-        self._omegas_train = calcOmegas(self._data_train, self.gamma, self.tau, metric=self.kernel_metric)
+        self._omegas_train, self.tau = calcOmegas(self._data_train, self.gamma, self.tau, metric=self.kernel_metric)
         self._kernel_train = miGraph_Mat(self._data_train, self._data_train, self.gamma, self._omegas_train, self._omegas_train)
 
-        self.SVM = SVC(kernel="precomputed", C=self.C, probability=self.probability)
+        self.SVM = SVC(kernel="precomputed", C=self.C, shrinking=self.shrinking, probability=self.probability, tol=self.tol, cache_size=self.cache_size, class_weight=None, verbose=False, max_iter=self.max_iter, decision_function_shape=None, random_state=self.random_state)
         self.SVM.fit(self._kernel_train, self._data_train.z)
 
 
@@ -165,7 +165,7 @@ class miGraph(BaseEstimator):
         if self._kernel_train is None:
             raise ValueError("You must run .fit before .predict!")
 
-        omegas_test = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
+        omegas_test, _ = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
         kernel_test = miGraph_Mat(data, self._data_train, self.gamma, omegas_test, self._omegas_train)
 
         z_pred = self.SVM.predict(kernel_test)
@@ -192,7 +192,7 @@ class miGraph(BaseEstimator):
         if self._kernel_train is None:
             raise ValueError("You must run .fit before .predict!")
 
-        omegas_test = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
+        omegas_test, _ = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
         kernel_test = miGraph_Mat(data, self._data_train, self.gamma, omegas_test, self._omegas_train)
 
         z_prob = self.SVM.predict_proba(kernel_test)
@@ -219,7 +219,7 @@ class miGraph(BaseEstimator):
         if self._kernel_train is None:
             raise ValueError("You must run .fit before .predict!")
 
-        omegas_test = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
+        omegas_test, _ = calcOmegas(data, self.gamma, self.tau, metric=self.kernel_metric)
         kernel_test = miGraph_Mat(data, self._data_train, self.gamma, omegas_test, self._omegas_train)
 
         z_prob = self.SVM.decision_function(kernel_test)

@@ -183,7 +183,7 @@ class milData():
             return self._X[key][n], self._y[key][n]
 
 
-    def add_x(self, key, x, z, y=None,  UPDATE=True):
+    def add_x(self, key, x, z, y=None, UPDATE=True):
         """
         Add one instance.
 
