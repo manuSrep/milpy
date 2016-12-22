@@ -7,17 +7,16 @@
 :license: GPL3
 """
 
-
-from .svm import *
-from .sil import *
-from .nsk import *
-from .smil import *
-from .misvm import *
-from .stk import *
-from .stmil import *
-from .sbmil import *
 from .mica import *
 from .misssvm import *
+from .misvm import *
+from .nsk import *
+from .sbmil import *
+from .sil import *
+from .smil import *
+from .stk import *
+from .stmil import *
+from .svm import *
 
 ################################################################################
 #                                                                              #
@@ -52,8 +51,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-
-
 
 """
 MISVM: An implementation of multiple-instance support vector machines

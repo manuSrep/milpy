@@ -2,25 +2,23 @@
 # -*- coding: utf8 -*-
 
 """
-Commonly used scalar functions
+Commonly used mathematical functions
 
 :author: Manuel Tuschen
 :date: 04.07.2016
 :license: GPL3
 """
 
-from __future__ import division, absolute_import, unicode_literals, print_function
-
 import numpy as np
 
-__all__ = ["sigmoid","d_sigmoid","logsumexp","d_logsumexp"]
+__all__ = ["sigmoid", "d_sigmoid", "logsumexp", "d_logsumexp"]
 
 
 def sigmoid(x):
     """
     Sigmoid function.
     """
-    x = np.clip(x,-100,100)
+    x = np.clip(x, -100, 100)
     res = 1. / (1. + np.exp(-x))
     return np.round(res, 16)
 
@@ -39,7 +37,7 @@ def logsumexp(x, c=1.):
     sensible for smaller values by setting c to high values.
     """
     x = x.copy() * c
-    x_max = np.max(x)# we use x_max to avoid numerical overflows
+    x_max = np.max(x)  # we use x_max to avoid numerical overflows
     return (x_max + np.log(np.sum(np.exp(x - x_max)))) / c
 
 
@@ -49,5 +47,5 @@ def d_logsumexp(x, l, c=1.):
     """
     x = x.copy() * c
     x_max = np.max(x)
-    ex = np.exp(x-x_max)
+    ex = np.exp(x - x_max)
     return ex[l] / np.sum(ex)

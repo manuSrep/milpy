@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 #                                                                              #
 # The following code was released under the following conditions by Gary Doran #
 #                                                                              #
@@ -32,11 +32,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+from itertools import count
+from sys import stderr
+
 from cvxopt import matrix as cvxmat, sparse, spmatrix
 from cvxopt.solvers import qp, options
-from sys import stderr
-from itertools import count
-
 from numpy import eye, vstack, matrix
 
 
@@ -56,8 +56,8 @@ class IterativeQP(object):
                 lb <= x <= ub
         """
         self.lb = lb
-        (self.P, self.q, self.G,
-         self.h, self.A, self.b) = _convert(H, f, Aeq, beq, lb, ub)
+        (self.P, self.q, self.G, self.h, self.A, self.b) = _convert(H, f, Aeq,
+            beq, lb, ub)
         self.last_results = None
         self.fix_pd = fix_pd
 
@@ -94,9 +94,8 @@ class IterativeQP(object):
 
         for i in count(-9):
             try:
-                results = qp(self.P, self.q, self.G,
-                             self.h, self.A, self.b,
-                             initvals=self.last_results)
+                results = qp(self.P, self.q, self.G, self.h, self.A, self.b,
+                    initvals=self.last_results)
                 break
             except ValueError as e:
                 # Sometimes the hessian isn't full rank,
@@ -117,13 +116,14 @@ class IterativeQP(object):
         # Check return status
         status = results['status']
         if not status == 'optimal':
-            print >> stderr, ('Warning: termination of qp with status: %s'
-                              % status)
+            print >> stderr, (
+            'Warning: termination of qp with status: %s' % status)
 
         # Convert back to NumPy matrix
         # and return solution
         xstar = results['x']
-        obj = Objective((0.5 * xstar.T * self.P * xstar)[0], (self.q.T * xstar)[0])
+        obj = Objective((0.5 * xstar.T * self.P * xstar)[0],
+            (self.q.T * xstar)[0])
         return matrix(xstar), obj
 
 

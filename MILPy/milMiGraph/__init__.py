@@ -7,4 +7,4 @@
 :license: GPL3
 """
 
-from .miGraph import *
+from .migraph import *

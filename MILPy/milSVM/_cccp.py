@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 #                                                                              #
 # The following code was released under the following conditions by Gary Doran #
 #                                                                              #
@@ -53,7 +53,7 @@ class CCCP(object):
 
     def mention(self, message):
         if self.verbose:
-            print (message)
+            print(message)
 
     def solve(self):
         """

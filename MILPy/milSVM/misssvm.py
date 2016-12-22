@@ -42,11 +42,11 @@ import inspect
 from ._quadprog import IterativeQP, Objective
 from ._util import BagSplitter, spdiag, slices
 from ._kernel import by_name as kernel_by_name
-from .mica import MICA
-from ._cccp import CCCP
+from .mica import MICA_
+from ._cccp import CCCP_
 
 
-class MissSVM(MICA):
+class MissSVM_(MICA_):
     """
     Semi-supervised learning applied to MI data (Zhou & Xu 2007)
     """
@@ -70,7 +70,7 @@ class MissSVM(MICA):
         @param alpha : the softmax parameter [default: 1e4]
         """
         self.alpha = alpha
-        super(MissSVM, self).__init__(**kwargs)
+        super(MissSVM_, self).__init__(**kwargs)
         self._bags = None
         self._sv_bags = None
         self._bag_predictions = None
@@ -129,7 +129,7 @@ class MissSVM(MICA):
                     print('Random restart %d of %d...' % (rr, self.restarts))
                 alphas = np.matrix([uniform(0.0, 1.0) for i in range(len(lb))]).T
                 obj = Objective(0.0, 0.0)
-            svm = MICA(kernel=self.kernel, gamma=self.gamma, p=self.p,
+            svm = MICA_(kernel=self.kernel, gamma=self.gamma, p=self.p,
                        verbose=self.verbose, sv_cutoff=self.sv_cutoff)
             svm._X = self._X
             svm._y = self._y
@@ -139,7 +139,7 @@ class MissSVM(MICA):
             svm._compute_separator(K)
             svm._K = K
 
-            class missCCCP(CCCP):
+            class missCCCP(CCCP_):
 
                 def bailout(cself, svm, obj_val):
                     return svm
@@ -206,8 +206,8 @@ class MissSVM(MICA):
             self._bag_predictions = self.predict(self._bags)
 
     def get_params(self, deep=True):
-        super_args = super(MissSVM, self).get_params()
-        args, _, _, _ = inspect.getargspec(MissSVM.__init__)
+        super_args = super(MissSVM_, self).get_params()
+        args, _, _, _ = inspect.signature(MissSVM_.__init__)
         args.pop(0)
         super_args.update({key: getattr(self, key, None) for key in args})
         return super_args

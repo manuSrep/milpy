@@ -35,10 +35,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Utility functions and classes
 """
-import numpy as np
-import scipy.sparse as sp
 from itertools import chain
 from random import uniform
+
+import numpy as np
+import scipy.sparse as sp
 
 
 def rand_convex(n):
@@ -81,10 +82,12 @@ class BagSplitter(object):
 
     def __getattr__(self, name):
         if name == 'pos_bags':
-            self.pos_bags = [bag for bag, cls in zip(self.bags, self.classes) if cls > 0.0]
+            self.pos_bags = [bag for bag, cls in zip(self.bags, self.classes) if
+                cls > 0.0]
             return self.pos_bags
         elif name == 'neg_bags':
-            self.neg_bags = [bag for bag, cls in zip(self.bags, self.classes) if cls <= 0.0]
+            self.neg_bags = [bag for bag, cls in zip(self.bags, self.classes) if
+                cls <= 0.0]
             return self.neg_bags
         elif name == 'neg_instances':
             self.neg_instances = np.vstack(self.neg_bags)
@@ -96,7 +99,8 @@ class BagSplitter(object):
             self.instances = np.vstack([self.neg_instances, self.pos_instances])
             return self.instances
         elif name == 'inst_classes':
-            self.inst_classes = np.vstack([-np.ones((self.L_n, 1)), np.ones((self.L_p, 1))])
+            self.inst_classes = np.vstack(
+                [-np.ones((self.L_n, 1)), np.ones((self.L_p, 1))])
             return self.inst_classes
         elif name == 'pos_groups':
             self.pos_groups = [len(bag) for bag in self.pos_bags]

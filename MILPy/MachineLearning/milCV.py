@@ -11,8 +11,6 @@ therefore released under their license.
 :license: BSD
 """
 
-from __future__ import division, absolute_import, unicode_literals, print_function
-
 import time
 import warnings
 from joblib import logger
@@ -32,7 +30,9 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 from joblib import Parallel, delayed
 
-__all__ = ["KFold","train_test_split", "cross_val_predict", "cross_val_predictions", "cross_val_score", "validation_curve","GridSearchCV"]
+__all__ = ["KFold", "train_test_split", "cross_val_predict",
+    "cross_val_predictions", "cross_val_score", "validation_curve",
+    "GridSearchCV"]
 
 
 ################################################################################
@@ -46,6 +46,7 @@ class BaseCrossValidator:
     Base class for all cross-validators
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
+
     def split(self, data):
         """
         Generate indices to split data into training and test set.
@@ -85,20 +86,27 @@ class BaseCrossValidator:
     def get_n_splits(self, data):
         """Returns the number of splitting iterations in the cross-validator"""
 
+
 class _BaseKFold(BaseCrossValidator):
     """
     Base class for KFold, GroupKFold, and StratifiedKFold
     """
+
     def __init__(self, n_splits, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
-            raise ValueError('The number of folds must be of Integral type. ' '%s of type %s was passed.'% (n_splits, type(n_splits)))
+            raise ValueError(
+                'The number of folds must be of Integral type. ' '%s of type %s was passed.' % (
+                n_splits, type(n_splits)))
         n_splits = int(n_splits)
 
         if n_splits <= 1:
-            raise ValueError("k-fold cross-validation requires at least one" " train/test split by setting n_splits=2 or more," " got n_splits={0}.".format(n_splits))
+            raise ValueError(
+                "k-fold cross-validation requires at least one" " train/test split by setting n_splits=2 or more," " got n_splits={0}.".format(
+                    n_splits))
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False;"" got {0}".format(shuffle))
+            raise TypeError(
+                "shuffle must be True or False;"" got {0}".format(shuffle))
 
         self.n_splits = n_splits
         self.shuffle = shuffle
@@ -125,7 +133,9 @@ class _BaseKFold(BaseCrossValidator):
         """
         n_samples = data.N_B
         if self.n_splits > n_samples:
-            raise ValueError(("Cannot have number of splits n_splits={0} greater" " than the number of samples: {1}.").format(self.n_splits, n_samples))
+            raise ValueError((
+            "Cannot have number of splits n_splits={0} greater" " than the number of samples: {1}.").format(
+                self.n_splits, n_samples))
 
         for train, test in super(_BaseKFold, self).split(data):
             yield train, test
@@ -147,6 +157,7 @@ class _BaseKFold(BaseCrossValidator):
         """
         return self.n_splits
 
+
 class KFold(_BaseKFold):
     """K-Folds cross-validator
     Provides train/test indices to split data in train/test sets. Split
@@ -165,8 +176,7 @@ class KFold(_BaseKFold):
         shuffling. If None, use default numpy RNG for shuffling.
     """
 
-    def __init__(self, n_splits=3, shuffle=False,
-                 random_state=None):
+    def __init__(self, n_splits=3, shuffle=False, random_state=None):
         super(KFold, self).__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, data):
@@ -213,6 +223,7 @@ class LeaveOneOut(BaseCrossValidator):
         """
         return data.N_B
 
+
 class LeavePOut(BaseCrossValidator):
     """
     Leave-P-Out cross-validator
@@ -250,7 +261,8 @@ class LeavePOut(BaseCrossValidator):
 class BaseShuffleSplit():
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_splits=10, test_size=0.1, train_size=None, random_state=None):
+    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
+            random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
         self.test_size = test_size
@@ -276,7 +288,6 @@ class BaseShuffleSplit():
         for train, test in self._iter_indices(data):
             yield train, test
 
-
     def _iter_indices(self, X, y=None, groups=None):
         """Generate (train, test) indices"""
 
@@ -296,6 +307,7 @@ class BaseShuffleSplit():
             Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
+
 
 class ShuffleSplit(BaseShuffleSplit):
     """
@@ -325,7 +337,8 @@ class ShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, data):
         n_samples = data.N_B
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,self.train_size)
+        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
+            self.train_size)
         np.random.seed(self.random_state)
         for i in range(self.n_splits):
             # random partition
@@ -333,6 +346,7 @@ class ShuffleSplit(BaseShuffleSplit):
             ind_test = permutation[:n_test]
             ind_train = permutation[n_test:(n_test + n_train)]
             yield ind_train, ind_test
+
 
 class PredefinedSplit(BaseCrossValidator):
     """Predefined split cross-validator
@@ -406,9 +420,8 @@ def _validate_shuffle_split_init(test_size, train_size):
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
             if test_size >= 1.:
-                raise ValueError(
-                    'test_size=%f should be smaller '
-                    'than 1.0 or be an integer' % test_size)
+                raise ValueError('test_size=%f should be smaller '
+                                 'than 1.0 or be an integer' % test_size)
         elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
@@ -418,15 +431,16 @@ def _validate_shuffle_split_init(test_size, train_size):
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif (np.asarray(test_size).dtype.kind == 'f' and
-                    (train_size + test_size) > 1.):
+            elif (np.asarray(test_size).dtype.kind == 'f' and (
+                train_size + test_size) > 1.):
                 raise ValueError('The sum of test_size and train_size = %f, '
                                  'should be smaller than 1.0. Reduce '
-                                 'test_size and/or train_size.' %
-                                 (train_size + test_size))
+                                 'test_size and/or train_size.' % (
+                                 train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for train_size: %r" % train_size)
+
 
 def _validate_shuffle_split(n_samples, test_size, train_size):
     """
@@ -435,15 +449,13 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     """
     if (test_size is not None and np.asarray(
             test_size).dtype.kind == 'i' and test_size >= n_samples):
-        raise ValueError(
-            'test_size=%d should be smaller than the number of '
-            'samples %d' % (test_size, n_samples))
+        raise ValueError('test_size=%d should be smaller than the number of '
+                         'samples %d' % (test_size, n_samples))
 
     if (train_size is not None and np.asarray(
             train_size).dtype.kind == 'i' and train_size >= n_samples):
-        raise ValueError(
-            "train_size=%d should be smaller than the number of"
-            " samples %d" % (train_size, n_samples))
+        raise ValueError("train_size=%d should be smaller than the number of"
+                         " samples %d" % (train_size, n_samples))
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = np.ceil(test_size * n_samples)
@@ -504,7 +516,9 @@ def train_test_split(data, test_size=None, train_size=None, random_state=None):
     data_test : milData
         The test set.
     """
-    keys_train, keys_test, _, _ = skl.model_selection.train_test_split(data.keys, data.keys, test_size=test_size, train_size=train_size, random_state=random_state)
+    keys_train, keys_test, _, _ = skl.model_selection.train_test_split(
+        data.keys, data.keys, test_size=test_size, train_size=train_size,
+        random_state=random_state)
 
     data_train = deepcopy(data)
     for key in keys_test:
@@ -521,13 +535,15 @@ def train_test_split(data, test_size=None, train_size=None, random_state=None):
 #                                                                              #
 #                       Hyper-parameter optimizers                             #
 #                                                                              #
-# ################################################################################
+#################################################################################
 class BaseSearchCV(BaseEstimator):
     """
     Base class for hyper parameter search with cross-validation.
     """
 
-    def __init__(self, estimator, scoring=None, fit_params=None, n_jobs=1,iid=True, refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs', error_score='raise',return_train_score=True):
+    def __init__(self, estimator, scoring=None, fit_params=None, n_jobs=1,
+            iid=True, refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+            error_score='raise', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -566,9 +582,7 @@ class BaseSearchCV(BaseEstimator):
                              "and the estimator doesn't provide one %s" % self.best_estimator_)
         return self.scorer_(self.best_estimator_, data)
 
-
-
-    def _fit(self,data, parameter_iterable):
+    def _fit(self, data, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
@@ -594,15 +608,15 @@ class BaseSearchCV(BaseEstimator):
                 return_train_score=self.return_train_score,
                 return_n_test_samples=True, return_times=True,
                 return_parameters=True, error_score=self.error_score) for
-            parameters in parameter_iterable for train, test in cv_iter)
+                parameters in parameter_iterable for train, test in cv_iter)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores_z, train_scores_y, test_scores_z, test_scores_y, test_sample_counts, fit_time,
-            score_time, parameters) = zip(*out)
+            (train_scores_z, train_scores_y, test_scores_z, test_scores_y,
+            test_sample_counts, fit_time, score_time, parameters) = zip(*out)
         else:
-            (test_scores_z, test_scores_y, test_sample_counts, fit_time, score_time,
-            parameters) = zip(*out)
+            (test_scores_z, test_scores_y, test_sample_counts, fit_time,
+            score_time, parameters) = zip(*out)
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
@@ -622,8 +636,8 @@ class BaseSearchCV(BaseEstimator):
             results['mean_%s' % key_name] = array_means
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(
-                np.average((array - array_means[:, np.newaxis]) ** 2,
-                    axis=1, weights=weights))
+                np.average((array - array_means[:, np.newaxis]) ** 2, axis=1,
+                    weights=weights))
             results['std_%s' % key_name] = array_stds
 
             if rank:
@@ -670,7 +684,8 @@ class BaseSearchCV(BaseEstimator):
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = _clone(base_estimator).set_params(**best_parameters)
+            best_estimator = _clone(base_estimator).set_params(
+                **best_parameters)
             best_estimator.fit(data, **self.fit_params)
             self.best_estimator_ = best_estimator
         return self
@@ -682,6 +697,7 @@ class BaseSearchCV(BaseEstimator):
     @property
     def best_score_(self):
         return self.cv_results_['mean_test_score'][self.best_index_]
+
 
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -824,13 +840,16 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
-        super().__init__(estimator=estimator, scoring=scoring, fit_params=fit_params, n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,pre_dispatch=pre_dispatch, error_score=error_score,return_train_score=return_train_score)
+            n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+            pre_dispatch='2*n_jobs', error_score='raise',
+            return_train_score=True):
+        super().__init__(estimator=estimator, scoring=scoring,
+            fit_params=fit_params, n_jobs=n_jobs, iid=iid, refit=refit, cv=cv,
+            verbose=verbose, pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
         self.param_grid = param_grid
 
-    def fit(self,data):
+    def fit(self, data):
         """Run fit with all sets of parameters.
         Parameters
         ----------
@@ -845,6 +864,7 @@ class GridSearchCV(BaseSearchCV):
             train/test set.
         """
         return self._fit(data, ParameterGrid(self.param_grid))
+
 
 class RandomizedSearchCV(BaseSearchCV):
     """
@@ -992,11 +1012,17 @@ class RandomizedSearchCV(BaseSearchCV):
         The number of cross-validation splits (folds/iterations).
     """
 
-    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None, fit_params=None, n_jobs=1, iid=True, refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs', random_state=None, error_score='raise', return_train_score=True):
+    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
+            fit_params=None, n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+            pre_dispatch='2*n_jobs', random_state=None, error_score='raise',
+            return_train_score=True):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-        super().__init__(estimator=estimator, scoring=scoring, fit_params=fit_params, n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,pre_dispatch=pre_dispatch, error_score=error_score, return_train_score=return_train_score)
+        super().__init__(estimator=estimator, scoring=scoring,
+            fit_params=fit_params, n_jobs=n_jobs, iid=iid, refit=refit, cv=cv,
+            verbose=verbose, pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def fit(self, data):
         """
@@ -1007,7 +1033,8 @@ class RandomizedSearchCV(BaseSearchCV):
         data : milData
             Data to fit.
         """
-        sampled_params = ParameterSampler(self.param_distributions, self.n_iter, random_state=self.random_state)
+        sampled_params = ParameterSampler(self.param_distributions, self.n_iter,
+            random_state=self.random_state)
         return self._fit(data, sampled_params)
 
 
@@ -1017,8 +1044,8 @@ class RandomizedSearchCV(BaseSearchCV):
 #                                                                              #
 ################################################################################
 
-def cross_val_score(estimator, data, scoring, cv, fit_params=None, n_jobs=1, pre_dispatch='2*n_jobs'):
-
+def cross_val_score(estimator, data, scoring, cv, fit_params=None, n_jobs=1,
+        pre_dispatch='2*n_jobs', verbose=0):
     """
     Evaluate a score by cross-validation
 
@@ -1062,7 +1089,9 @@ def cross_val_score(estimator, data, scoring, cv, fit_params=None, n_jobs=1, pre
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(_clone(estimator), data, scoring, train, test, None, fit_params) for train, test in cv.split(data))
+    scores = parallel(
+        delayed(_fit_and_score)(_clone(estimator), data, scoring, train, test,
+            None, fit_params) for train, test in cv.split(data))
 
     scores_z = np.array(scores)[:, 0]
     scores_y = np.array(scores)[:, 1]
@@ -1070,7 +1099,9 @@ def cross_val_score(estimator, data, scoring, cv, fit_params=None, n_jobs=1, pre
         scores_y = None
     return scores_z, scores_y
 
-def cross_val_predict(estimator, data, cv, fit_params=None, n_jobs=1, pre_dispatch='2*n_jobs', method='predict'):
+
+def cross_val_predict(estimator, data, cv, fit_params=None, n_jobs=1,
+        pre_dispatch='2*n_jobs', method='predict'):
     """
     Generate cross-validated estimates for each input data point
 
@@ -1115,7 +1146,9 @@ def cross_val_predict(estimator, data, cv, fit_params=None, n_jobs=1, pre_dispat
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch)
-    prediction_blocks = parallel(delayed(_fit_and_predict)(_clone(estimator), data, train, test, fit_params, method)for train, test in cv.split(data))
+    prediction_blocks = parallel(
+        delayed(_fit_and_predict)(_clone(estimator), data, train, test, 0,
+            fit_params, method) for train, test in cv.split(data))
 
     # Concatenate the predictions
     predictions_z = [pred_block_z for pred_block_z, _, _ in prediction_blocks]
@@ -1131,7 +1164,9 @@ def cross_val_predict(estimator, data, cv, fit_params=None, n_jobs=1, pre_dispat
     else:
         return predictions_z[test_indices], None
 
-def cross_val_predictions(estimator, data, cv, fit_params=None, n_jobs=1, pre_dispatch='2*n_jobs', method='predict'):
+
+def cross_val_predictions(estimator, data, cv, fit_params=None, n_jobs=1,
+        pre_dispatch='2*n_jobs', method='predict'):
     """
     Generate cross-validated estimates for each CV test split
 
@@ -1175,8 +1210,10 @@ def cross_val_predictions(estimator, data, cv, fit_params=None, n_jobs=1, pre_di
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs,pre_dispatch=pre_dispatch)
-    prediction_blocks = parallel(delayed(_fit_and_predict)(deepcopy(estimator), data, train, test, fit_params, method)for train, test in cv.split(data))
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch)
+    prediction_blocks = parallel(
+        delayed(_fit_and_predict)(deepcopy(estimator), data, train, test, 0,
+            fit_params, method) for train, test in cv.split(data))
 
     # Concatenate the predictions
     predictions_z = [pred_block_z for pred_block_z, _, _ in prediction_blocks]
@@ -1188,7 +1225,8 @@ def cross_val_predictions(estimator, data, cv, fit_params=None, n_jobs=1, pre_di
     return predictions_z, predictions_y, test_keys
 
 
-def validation_curve(estimator,data, param_name, param_range, cv, scoring, n_jobs=1, pre_dispatch="all"):
+def validation_curve(estimator, data, param_name, param_range, cv, scoring,
+        n_jobs=1, pre_dispatch="all", verbose=0, fit_params=None):
     """
     Validation curve.
     Determine training and test scores for varying parameter values.
@@ -1236,25 +1274,29 @@ def validation_curve(estimator,data, param_name, param_range, cv, scoring, n_job
     """
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch)
-    out = parallel(delayed(_fit_and_score)( estimator,data, scoring, train, test, parameters={param_name: v}, fit_params=None, return_train_score=True)for train, test in cv.split(data) for v in param_range)
-
+    out = parallel(
+        delayed(_fit_and_score)(estimator, data, scoring, train, test, verbose,
+            {param_name: v}, fit_params, return_train_score=True) for
+        train, test in cv.split(data) for v in param_range)
     out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
 
-    out = out.reshape(n_cv_folds, n_params, 2, 2).transpose((2,1,0,3))
-    train_scores_z = out[0,:,:,0].astype(np.float)
-    test_scores_z = out[1,:,:,0].astype(np.float)
-    if not np.any(out[:,:,:,1] is None):
-        train_scores_y = out[0,:,:,1].astype(np.float)
-        test_scores_y = out[1,:,:,1].astype(np.float)
+    out = out.reshape(n_cv_folds, n_params, 2, 2).transpose((2, 1, 0, 3))
+    train_scores_z = out[0, :, :, 0].astype(np.float)
+    test_scores_z = out[1, :, :, 0].astype(np.float)
+    if not np.any(out[:, :, :, 1] is None):
+        train_scores_y = out[0, :, :, 1].astype(np.float)
+        test_scores_y = out[1, :, :, 1].astype(np.float)
     else:
         train_scores_y = test_scores_y = None
 
     return train_scores_z, test_scores_z, train_scores_y, test_scores_y
 
 
-def _fit_and_score(estimator,data, scorer, train, test, verbose, parameters, fit_params, return_train_score=False, return_parameters=False, return_n_test_samples=False,return_times=False, error_score='raise'):
+def _fit_and_score(estimator, data, scorer, train, test, verbose, parameters,
+        fit_params, return_train_score=False, return_parameters=False,
+        return_n_test_samples=False, return_times=False, error_score='raise'):
     """
     Fit estimator and compute scores for a given dataset split.
 
@@ -1296,12 +1338,13 @@ def _fit_and_score(estimator,data, scorer, train, test, verbose, parameters, fit
         if parameters is None:
             msg = ''
         else:
-            msg = '%s' % (', '.join('%s=%s' % (k, v) for k, v in parameters.items()))
+            msg = '%s' % (
+            ', '.join('%s=%s' % (k, v) for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
         # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k,v) for k, v in fit_params.items()])
+    fit_params = dict([(k, v) for k, v in fit_params.items()])
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -1346,7 +1389,8 @@ def _fit_and_score(estimator,data, scorer, train, test, verbose, parameters, fit
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_score_z, train_score_y, test_score_z, test_score_y] if return_train_score else [test_score_z, test_score_y]
+    ret = [train_score_z, train_score_y, test_score_z,
+        test_score_y] if return_train_score else [test_score_z, test_score_y]
 
     if return_n_test_samples:
         ret.append(data_test.N_B)
@@ -1357,7 +1401,7 @@ def _fit_and_score(estimator,data, scorer, train, test, verbose, parameters, fit
     return ret
 
 
-def _fit_and_predict(estimator,data, train, test, fit_params, method):
+def _fit_and_predict(estimator, data, train, test, verbose, fit_params, method):
     """
     Fit estimator and predict values for a given dataset split.
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1396,17 +1440,19 @@ def _fit_and_predict(estimator,data, train, test, fit_params, method):
     predictions_z, predictions_y = func(data_test)
     return predictions_z, predictions_y, data_test.keys
 
+
 def _safe_split(data, key_index):
     """
     Create milData subset.
     """
     new = deepcopy(data)
 
-    for k,key in enumerate(data.keys):
+    for k, key in enumerate(data.keys):
         if k not in key_index:
             new.del_B(key)
 
     return new
+
 
 def _clone(estimator, safe=True):
     """
@@ -1433,8 +1479,8 @@ def _clone(estimator, safe=True):
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
-                            "as it does not implement a 'get_params' methods."
-                            % (repr(estimator), type(estimator)))
+                            "as it does not implement a 'get_params' methods." % (
+                            repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
@@ -1453,17 +1499,12 @@ def _clone(estimator, safe=True):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
                 equality_test = False
-            elif (param1.ndim > 0
-                    and param1.shape[0] > 0
-                    and isinstance(param2, np.ndarray)
-                    and param2.ndim > 0
-                    and param2.shape[0] > 0):
+            elif (param1.ndim > 0 and param1.shape[0] > 0 and isinstance(param2,
+                np.ndarray) and param2.ndim > 0 and param2.shape[0] > 0):
                 equality_test = (
-                    param1.shape == param2.shape
-                    and param1.dtype == param2.dtype
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                )
+                    param1.shape == param2.shape and param1.dtype == param2.dtype and (
+                    _first_and_last_element(param1) == _first_and_last_element(
+                        param2)))
             else:
                 equality_test = np.all(param1 == param2)
         elif sparse.issparse(param1):
@@ -1472,32 +1513,26 @@ def _clone(estimator, safe=True):
                 equality_test = False
             elif param1.size == 0 or param2.size == 0:
                 equality_test = (
-                    param1.__class__ == param2.__class__
-                    and param1.size == 0
-                    and param2.size == 0
-                )
+                    param1.__class__ == param2.__class__ and param1.size == 0 and param2.size == 0)
             else:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                    and param1.nnz == param2.nnz
-                    and param1.shape == param2.shape
-                )
+                equality_test = (param1.__class__ == param2.__class__ and (
+                _first_and_last_element(param1) == _first_and_last_element(
+                    param2)) and param1.nnz == param2.nnz and param1.shape == param2.shape)
         else:
             # fall back on standard equality
             equality_test = param1 == param2
         if equality_test:
             warnings.warn("Estimator %s modifies parameters in __init__."
                           " This behavior is deprecated as of 0.18 and "
-                          "support for this behavior will be removed in 0.20."
-                          % type(estimator).__name__, DeprecationWarning)
+                          "support for this behavior will be removed in 0.20." % type(
+                estimator).__name__, DeprecationWarning)
         else:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'does not seem to set parameter %s' %
-                               (estimator, name))
+                               'does not seem to set parameter %s' % (
+                               estimator, name))
 
     return new_object
+
 
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""

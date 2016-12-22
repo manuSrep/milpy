@@ -9,7 +9,6 @@ Class to manage data of MIL problems
 :license: GPL3
 """
 
-from __future__ import division, absolute_import, unicode_literals, print_function
 from itertools import compress
 
 import numpy as np
@@ -96,7 +95,6 @@ class milData():
         self._pos_x = {}  # Store instance positions for fast access (key, n)
         self._CACHE = CACHE
 
-
     def __getattr__(self, item):
         if item == "keys":
             return self._keys
@@ -158,8 +156,8 @@ class milData():
         ndarray
             The MilArray of one bag.
         """
-        return np.array(self._X[key]), np.array(self._z[key]), np.array(self._y[key])
-
+        return np.array(self._X[key]), np.array(self._z[key]), np.array(
+            self._y[key])
 
     def get_x(self, n, key=None):
         """
@@ -178,10 +176,10 @@ class milData():
             The features and label of one instance.
         """
         if key is None:
-            return self._X[self._pos_x[n][0]][self._pos_x[n][1]], self._y[self._pos_x[n][0]][self._pos_x[n][1]]
+            return self._X[self._pos_x[n][0]][self._pos_x[n][1]], \
+            self._y[self._pos_x[n][0]][self._pos_x[n][1]]
         else:
             return self._X[key][n], self._y[key][n]
-
 
     def add_x(self, key, x, z, y=None, UPDATE=True):
         """
@@ -209,22 +207,25 @@ class milData():
         y = np.atleast_1d(np.array(y))
 
         if len(x.shape) > 2:
-            raise ValueError("The instance features to add have inappropriate shape.")
+            raise ValueError(
+                "The instance features to add have inappropriate shape.")
         if len(z.shape) > 1:
             raise ValueError("The bag label to add has inappropriate shape.")
         if len(y.shape) > 1:
-            raise ValueError("The instance label to add has inappropriate shape.")
+            raise ValueError(
+                "The instance label to add has inappropriate shape.")
         if len(y) != len(x):
-            raise ValueError("Number of labels does not match number of features.")
+            raise ValueError(
+                "Number of labels does not match number of features.")
 
         self._N_X += 1
         self._N_D = x.shape[-1]
 
-        if key in self._keys: # We add to an existing bag
+        if key in self._keys:  # We add to an existing bag
             self._X[key] = np.concatenate((self._X[key], x), axis=0)
             self._y[key] = np.concatenate((self._y[key], y), axis=0)
             self._z[key] = np.atleast_1d(np.array(z))
-        else: # we create a new bag
+        else:  # we create a new bag
             self._N_B += 1
             self._keys.append(key)
             self._X[key] = x
@@ -234,12 +235,12 @@ class milData():
             if not np.any(np.isnan(self._y[key])):
                 self._z[key] = np.atleast_1d(np.max(self._y[key]))
             else:
-                raise ValueError("Can not update due to unknown instance label.")
+                raise ValueError(
+                    "Can not update due to unknown instance label.")
 
         self._clear()
         self._sort_keys()
         self._map()
-
 
     def del_x(self, n, key=None, UPDATE=True):
         """
@@ -301,9 +302,8 @@ class milData():
         if self.N_D < l:
             raise ValueError("Feature does nor exist!")
 
-        for key in self.keys: # got through all bags and delete feature
+        for key in self.keys:  # got through all bags and delete feature
             self._X[key] = np.delete(self._X[key], l, axis=1)
-
 
     def del_singleEntires(self):
         """
@@ -315,7 +315,6 @@ class milData():
         to_delete = list(compress(self._keys, self.N_b == 0))
         for key in to_delete:
             self.del_B(key)
-
 
     def save(self, path):
         """
@@ -330,7 +329,6 @@ class milData():
         save_dict(self._X, self.name + "_x", path)
         save_dict(self._y, self.name + "_y", path)
         save_dict(self._z, self.name + "_z", path)
-
 
     def load(self, path):
         """
@@ -351,10 +349,9 @@ class milData():
         self._N_B = len(self._keys)
         self._N_D = self._X[self._keys[0]].shape[-1]
         self._N_X = 0
-        for k,v in self._X.items():
+        for k, v in self._X.items():
             self._N_X += len(v)
         self._map()
-
 
     def _sort_keys(self):
         """
@@ -363,7 +360,6 @@ class milData():
         if self._X.keys() != self._z.keys() and self._z.keys() != self._y.keys():
             raise KeyError("Key Error")
         self._keys = sorted(self._X.keys())
-
 
     def _cache(self):
         """
@@ -377,8 +373,6 @@ class milData():
         for key in self._keys:
             self._N_b.append(len(self._X[key]))
 
-
-
     def _clear(self):
         """
         Clear cached data
@@ -387,7 +381,6 @@ class milData():
         self._X_arr = None
         self._y_arr = None
         self._z_arr = None
-
 
     def _map(self):
         """
@@ -411,7 +404,7 @@ class milData():
         counter = 0
         for key in self._keys:
             n = len(self._X[key])
-            self._pos_b[key] = (counter, counter+n)
+            self._pos_b[key] = (counter, counter + n)
             counter += n
 
 
@@ -585,5 +578,3 @@ def load_dict(fname, path=None):
     for key, value in mydict.items():
         mydict[key] = np.array(value)
     return mydict
-
-

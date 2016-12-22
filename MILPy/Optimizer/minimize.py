@@ -1,6 +1,4 @@
-
 from __future__ import division, print_function, absolute_import
-
 
 ################################################################################
 #                                                                              #
@@ -50,9 +48,9 @@ Functions
 - minimize : minimization of a function of several variables.
 - minimize_scalar : minimization of a function of one variable.
 """
-#from __future__ import division, print_function, absolute_import
+# from __future__ import division, print_function, absolute_import
 
-#__all__ = ['minimize', 'minimize_scalar']
+# __all__ = ['minimize', 'minimize_scalar']
 
 from warnings import warn
 
@@ -62,9 +60,9 @@ from scipy._lib.six import callable
 
 # unconstrained minimization
 from .optimizer import (_minimize_neldermead, _minimize_powell, _minimize_cg,
-                       _minimize_bfgs, _minimize_newtoncg,
-                       _minimize_scalar_brent, _minimize_scalar_bounded,
-                       _minimize_scalar_golden, MemoizeJac, _follow)
+                        _minimize_bfgs, _minimize_newtoncg,
+                        _minimize_scalar_brent, _minimize_scalar_bounded,
+                        _minimize_scalar_golden, MemoizeJac, _follow)
 from scipy.optimize._trustregion_dogleg import _minimize_dogleg
 from scipy.optimize._trustregion_ncg import _minimize_trust_ncg
 
@@ -75,9 +73,8 @@ from scipy.optimize.cobyla import _minimize_cobyla
 from scipy.optimize.slsqp import _minimize_slsqp
 
 
-def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
-             hessp=None, bounds=None, constraints=(), tol=None,
-             callback=None, options=None):
+def minimize(fun, x0, args=(), method=None, jac=None, hess=None, hessp=None,
+        bounds=None, constraints=(), tol=None, callback=None, options=None):
     """Minimization of scalar function of one or more variables.
 
     In general, the optimization problems are of the form::
@@ -420,36 +417,34 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
     # - jac
     if meth in ['nelder-mead', 'powell', 'cobyla'] and bool(jac):
         warn('Method %s does not use gradient information (jac).' % method,
-             RuntimeWarning)
+            RuntimeWarning)
     # - hess
     if meth not in (
-    'newton-cg', 'dogleg', 'trust-ncg', '_custom') and hess is not None:
+            'newton-cg', 'dogleg', 'trust-ncg', '_custom') and hess is not None:
         warn('Method %s does not use Hessian information (hess).' % method,
-             RuntimeWarning)
+            RuntimeWarning)
     # - hessp
-    if meth not in (
-    'newton-cg', 'dogleg', 'trust-ncg', '_custom') and hessp is not None:
+    if meth not in ('newton-cg', 'dogleg', 'trust-ncg',
+    '_custom') and hessp is not None:
         warn('Method %s does not use Hessian-vector product '
              'information (hessp).' % method, RuntimeWarning)
     # - constraints or bounds
     if (meth in ['nelder-mead', 'powell', 'cg', 'bfgs', 'newton-cg', 'dogleg',
-                 'trust-ncg'] and (bounds is not None or np.any(constraints))):
+        'trust-ncg'] and (bounds is not None or np.any(constraints))):
         warn('Method %s cannot handle constraints nor bounds.' % method,
-             RuntimeWarning)
+            RuntimeWarning)
     if meth in ['l-bfgs-b', 'tnc'] and np.any(constraints):
-        warn('Method %s cannot handle constraints.' % method,
-             RuntimeWarning)
+        warn('Method %s cannot handle constraints.' % method, RuntimeWarning)
     if meth == 'cobyla' and bounds is not None:
-        warn('Method %s cannot handle bounds.' % method,
-             RuntimeWarning)
+        warn('Method %s cannot handle bounds.' % method, RuntimeWarning)
     # - callback
     if (meth in ['cobyla'] and callback is not None):
         warn('Method %s does not support callback.' % method, RuntimeWarning)
     # - return_all
-    if (meth in ['l-bfgs-b', 'tnc', 'cobyla', 'slsqp'] and
-            options.get('return_all', False)):
+    if (meth in ['l-bfgs-b', 'tnc', 'cobyla', 'slsqp'] and options.get(
+        'return_all', False)):
         warn('Method %s does not support the return_all option.' % method,
-             RuntimeWarning)
+            RuntimeWarning)
 
     # fun also returns the jacobian
     if not callable(jac):
@@ -476,8 +471,8 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
 
     if meth == '_custom':
         return method(fun, x0, args=args, jac=jac, hess=hess, hessp=hessp,
-                      bounds=bounds, constraints=constraints,
-                      callback=callback, **options)
+            bounds=bounds, constraints=constraints, callback=callback,
+            **options)
     elif meth == 'nelder-mead':
         return _minimize_neldermead(fun, x0, args, callback=callback, **options)
     elif meth == 'powell':
@@ -487,31 +482,31 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
     elif meth == 'bfgs':
         return _minimize_bfgs(fun, x0, args, jac, callback=callback, **options)
     elif meth == 'newton-cg':
-        return _minimize_newtoncg(fun, x0, args, jac, hess, hessp, callback=callback,
-                                  **options)
+        return _minimize_newtoncg(fun, x0, args, jac, hess, hessp,
+            callback=callback, **options)
     elif meth == 'l-bfgs-b':
-        return _minimize_lbfgsb(fun, x0, args, jac, bounds,
-                                callback=callback, **options)
+        return _minimize_lbfgsb(fun, x0, args, jac, bounds, callback=callback,
+            **options)
     elif meth == 'tnc':
         return _minimize_tnc(fun, x0, args, jac, bounds, callback=callback,
-                             **options)
+            **options)
     elif meth == 'cobyla':
         return _minimize_cobyla(fun, x0, args, constraints, **options)
     elif meth == 'slsqp':
-        return _minimize_slsqp(fun, x0, args, jac, bounds,
-                               constraints, callback=callback, **options)
+        return _minimize_slsqp(fun, x0, args, jac, bounds, constraints,
+            callback=callback, **options)
     elif meth == 'dogleg':
-        return _minimize_dogleg(fun, x0, args, jac, hess,
-                                callback=callback, **options)
+        return _minimize_dogleg(fun, x0, args, jac, hess, callback=callback,
+            **options)
     elif meth == 'trust-ncg':
         return _minimize_trust_ncg(fun, x0, args, jac, hess, hessp,
-                                   callback=callback, **options)
+            callback=callback, **options)
     else:
         raise ValueError('Unknown solver %s' % method)
 
 
-def minimize_scalar(fun, bracket=None, bounds=None, args=(),
-                    method='brent', tol=None, options=None):
+def minimize_scalar(fun, bracket=None, bounds=None, args=(), method='brent',
+        tol=None, options=None):
     """Minimization of scalar function of one variable.
 
     Parameters

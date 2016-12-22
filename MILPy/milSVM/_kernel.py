@@ -39,15 +39,15 @@ A kernel should take two arguments,
 each of which is a list of examples
 as rows of a numpy matrix
 """
-from numpy import matrix, vstack, hstack
-import numpy as np
-from scipy.spatial.distance import cdist
-from scipy.io import loadmat, savemat
+import hashlib
 import math
 import os
-
-import hashlib
 import time
+
+import numpy as np
+from numpy import matrix, vstack, hstack
+from scipy.io import loadmat, savemat
+from scipy.spatial.distance import cdist
 
 CACHE_CUTOFF_T = 10
 CACHE_DIR = '.kernel_cache'
@@ -161,9 +161,9 @@ def set_kernel(k, normalizer=no_norm):
                 else:
                     # Only need to compute half of
                     # the matrix if it's symmetric
-                    upper = matrix([i * [0] + [np.sum(k(x, y))
-                                               for y in Y[i:]]
-                                    for i, x in enumerate(X, 1)])
+                    upper = matrix(
+                        [i * [0] + [np.sum(k(x, y)) for y in Y[i:]] for i, x in
+                            enumerate(X, 1)])
                     diag = np.array([np.sum(k(x, x)) for x in X])
                     raw_kernel = upper + upper.T + spdiag(diag)
             else:
@@ -173,11 +173,13 @@ def set_kernel(k, normalizer=no_norm):
                 lensX = map(len, X)
                 lensY = map(len, Y)
                 if any(l != 1 for l in lensX):
-                    raw_kernel = vstack([np.sum(raw_kernel[i:j, :], axis=0)
-                                         for i, j in slices(lensX)])
+                    raw_kernel = vstack(
+                        [np.sum(raw_kernel[i:j, :], axis=0) for i, j in
+                            slices(lensX)])
                 if any(l != 1 for l in lensY):
-                    raw_kernel = hstack([np.sum(raw_kernel[:, i:j], axis=1)
-                                         for i, j in slices(lensY)])
+                    raw_kernel = hstack(
+                        [np.sum(raw_kernel[:, i:j], axis=1) for i, j in
+                            slices(lensY)])
             return np.divide(raw_kernel, norms)
         else:
             return k(X, Y)

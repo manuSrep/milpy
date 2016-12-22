@@ -9,12 +9,10 @@ Simple gradient checker
 :license: GPL3
 """
 
-from __future__ import division, absolute_import, unicode_literals, print_function
-
 import numpy as np
 
-
 __all__ = ["check_grad_element", "check_grad_vector", "check_grad_element_wise"]
+
 
 def check_grad_element(func, grad, x0, *args, **kwargs):
     """
@@ -50,7 +48,7 @@ def check_grad_element(func, grad, x0, *args, **kwargs):
 
     f_ = grad(x0, *args)
 
-    diff = np.sqrt(np.sum((f_approx - f_)**2))
+    diff = np.sqrt(np.sum((f_approx - f_) ** 2))
     return diff
 
 
@@ -117,7 +115,7 @@ def check_grad_vector(func, grad, x0, *args, **kwargs):
             f_approx[i] = (f2 - f1) / (epsilon)
 
             ei[i] = 0
-        diff = np.sqrt(np.sum((f_approx - grad(x0, *args))**2))
+        diff = np.sqrt(np.sum((f_approx - grad(x0, *args)) ** 2))
 
     return diff
 
@@ -172,7 +170,7 @@ def check_grad_element_wise(func, grad, x0, *args, **kwargs):
         f2 = func(x0 + 0.5 * epsi, *args)
         f_approx = (f2 - f1) / (epsilon)
 
-        diff = np.sqrt(np.sum((f_approx - f_)**2))
+        diff = np.sqrt(np.sum((f_approx - f_) ** 2))
         return diff
 
     else:
@@ -188,7 +186,7 @@ def check_grad_element_wise(func, grad, x0, *args, **kwargs):
             f2 = func(x0 + 0.5 * epsi, *args)
             f_approx = (f2 - f1) / (epsilon)
 
-            diff = np.sqrt(np.sum((f_approx - f_)**2))
+            diff = np.sqrt(np.sum((f_approx - f_) ** 2))
             maxv = max(maxv, diff)
 
         return maxv

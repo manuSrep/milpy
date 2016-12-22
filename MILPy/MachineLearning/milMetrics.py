@@ -2,23 +2,23 @@
 # -*- coding: utf8 -*-
 
 """
-Metrics module for MIL datasets. The API is tried to keep consistent with
-sklearn. Several parts of the code are also copied directly from sklearn and are
-therefore released under their license.
+Scoring metrics for MIL.
+! Note: At the moment only the binary classification task is supported!
 
 :author: Manuel Tuschen
-:date: 04.07.2016
-:license: BSD
+:date: 08.12.2016
+:license: BSD 3 clause
 """
-
-from __future__ import division, absolute_import, unicode_literals, print_function
 
 import numpy as np
 import sklearn as skl
-from sklearn import metrics
+from sklearn.metrics import auc
 
-
-__all__ = ["make_scorer","get_scorer","accuracy_score","average_precision_score","f1_score","fbeta_score","negative_predictive_value","positive_predictive_value","precision_score","precision_recall_curve", "roc_auc_score","roc_curve","true_positive_rate","true_negative_rate"]
+__all__ = ["make_scorer", "get_scorer", "accuracy_score", "auc",
+    "average_precision_score", "f1_score", "fbeta_score",
+    "negative_predictive_value", "positive_predictive_value", "precision_score",
+    "precision_recall_curve", "roc_auc_score", "roc_curve",
+    "true_positive_rate", "true_negative_rate"]
 
 
 ################################################################################
@@ -27,25 +27,31 @@ __all__ = ["make_scorer","get_scorer","accuracy_score","average_precision_score"
 #                                                                              #
 ################################################################################
 
-# We start with those scores relevant for binary class prediction
-
-
-def accuracy_score(z_true, z_pred, y_true=None, y_pred=None):
+def accuracy_score(z_true, z_pred, y_true=None, y_pred=None, normalize=True,
+        sample_weight_z=None, sample_weight_y=None):
     """
     Accuracy classification score for bag level and optionally for instance
-    level.
-    Note: this implementation is restricted to the binary classification task.
+    level. In multilabel classification, this function computes subset accuracy:
+    the set of labels predicted for a sample must exactly match the
+    corresponding set of labels in z_true and y_true.
 
     Parameters:
     -----------
-    z_true : 1d array-like
+    z_true : array, shape = [n_bags] or [n_bags, n_classes]
         Ground truth (correct) labels for the bags.
-    z_pred : 1d array-like
+    z_pred : array, shape = [n_bags] or [n_bags, n_classes]
          Predicted labels, as returned by a classifier for the bags.
-    y_true : 1d array-like
+    y_true : array, shape = [n_instances] or [n_instances, n_classes]
         Ground truth (correct) labels for the instances.
-    y_pred : 1d array-like
+    y_pred : array, shape = [n_instances] or [n_instances, n_classes]
        Predicted labels, as returned by a classifier for the instances.
+    normalize : bool, optional (default=True)
+        If False, return the number of correctly classified samples. Otherwise,
+        return the fraction of correctly classified samples.
+    sample_weight_z : array-like, shape = [n_bags], optional
+        Sample weights of the bags.
+    sample_weight_y : array-like, shape = [n_instances], optional
+        Sample weights of the instances.
 
     Returns:
     --------
@@ -55,33 +61,54 @@ def accuracy_score(z_true, z_pred, y_true=None, y_pred=None):
        The correctly classified samples for the instances. The best performance
        is 1.
     """
-    score_z = skl.metrics.accuracy_score(z_true, z_pred, normalize=True, sample_weight=None)
+    score_z = skl.metrics.accuracy_score(z_true, z_pred, normalize=normalize,
+        sample_weight=sample_weight_z)
     if y_true is not None and y_pred is not None:
-        score_y = skl.metrics.accuracy_score(y_true, y_pred, normalize=True, sample_weight=None)
+        score_y = skl.metrics.accuracy_score(y_true, y_pred,
+            normalize=normalize, sample_weight=sample_weight_y)
     else:
         score_y = None
     return score_z, score_y
 
-def average_precision_score(z_true, z_score, y_true=None, y_score=None):
+
+def average_precision_score(z_true, z_score, y_true=None, y_score=None,
+        average="macro", sample_weight_y=None, sample_weight_z=None):
     """
     Compute average precision (AP) from prediction scores
     This score corresponds to the area under the precision-recall curve.
-    Note: this implementation is restricted to the binary classification task.
 
     Parameters
     ----------
-    z_true : 1d array-like
+    z_true : array, shape = [n_bags] or [n_bags, n_classes]
         Ground truth (correct) labels for the bags.
-    z_score : 1d array-like
+    z_score : array, shape = [n_bags] or [n_bags, n_classes]
         Bag target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
-    y_true : 1d array-like
+    y_true : array, shape = [n_instances] or [n_instances, n_classes]
         Ground truth (correct) labels for the instances.
-    y_score : 1d array-like
+    y_score : array, shape = [n_instances] or [n_instances, n_classes]
         Instance target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+    sample_weight_z : array-like, shape = [n_bags], optional
+        Sample weights of the bags.
+    sample_weight_y : array-like, shape = [n_instances], optional
+        Sample weights of the instances.
 
     Returns
     -------
@@ -90,15 +117,18 @@ def average_precision_score(z_true, z_score, y_true=None, y_score=None):
     average_precision_Y : float
         Average precision score for the instances.
     """
-    ap_z = skl.metrics.average_precision_score(z_true, z_score, average="macro", sample_weight=None)
+    ap_z = skl.metrics.average_precision_score(z_true, z_score, average=average,
+        sample_weight=sample_weight_z)
     if y_true is not None and y_score is not None:
-        ap_y = skl.metrics.average_precision_score(y_true, y_score, average="macro",
-            sample_weight=None)
+        ap_y = skl.metrics.average_precision_score(y_true, y_score,
+            average=average, sample_weight=sample_weight_y)
     else:
         ap_y = None
     return ap_z, ap_y
 
-def f1_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
+
+def f1_score(z_true, z_pred, y_true=None, y_pred=None, labels=None, pos_label=1,
+        average='binary', sample_weight_z=None, sample_weight_y=None):
     """
     Compute the F1 score, also known as balanced F-score or F-measure
     The F1 score can be interpreted as a weighted average of the precision and
@@ -108,20 +138,59 @@ def f1_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
         F1 = 2 * (precision * recall) / (precision + recall)
     In the multi-class and multi-label case, this is the weighted average of
     the F1 score of each class.
-    Note: this implementation is restricted to the binary classification task.
 
     Parameters:
     ----------
-    z_true : 1d array-like
+    z_true : array, shape = [n_bags] or [n_bags, n_classes]
         Ground truth (correct) labels for the bags.
-    z_pred : 1d array-like
+    z_pred : array, shape = [n_bags] or [n_bags, n_classes]
          Predicted labels, as returned by a classifier for the bags.
-    y_true : 1d array-like
+    y_true : array, shape = [n_instances] or [n_instances, n_classes]
         Ground truth (correct) labels for the instances.
-    y_pred : 1d array-like
+    y_pred : array, shape = [n_instances] or [n_instances, n_classes]
        Predicted labels, as returned by a classifier for the instances.
+    labels : list, optional
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
     pos_label : str or int, 1 by default
-        The class to report.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
+                       'weighted']
+        This parameter is required for multiclass/multilabel targets.
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+    sample_weight_z : array-like, shape = [n_bags], optional
+        Sample weights of the bags.
+    sample_weight_y : array-like, shape = [n_instances], optional
+        Sample weights of the instances.
 
     Returns:
     --------
@@ -130,14 +199,19 @@ def f1_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     f1_score_y : float
         F1 score for the positive instances.
     """
-    f1_score_z = skl.metrics.f1_score(z_true, z_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+    f1_score_z = skl.metrics.f1_score(z_true, z_pred, labels=labels,
+        pos_label=pos_label, average=average, sample_weight=sample_weight_z)
     if y_true is not None and y_pred is not None:
-        f1_score_y = skl.metrics.f1_score(y_true, y_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+        f1_score_y = skl.metrics.f1_score(y_true, y_pred, labels=labels,
+            pos_label=pos_label, average=average, sample_weight=sample_weight_y)
     else:
         f1_score_y = None
     return f1_score_z, f1_score_y
 
-def fbeta_score(z_true, z_pred, y_true=None, beta=1, y_pred=None, pos_label=1):
+
+def fbeta_score(z_true, z_pred, y_true=None, beta=1, y_pred=None, labels=None,
+        pos_label=1, average='binary', sample_weight_z=None,
+        sample_weight_y=None):
     """
     Compute the F-beta score
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -146,22 +220,61 @@ def fbeta_score(z_true, z_pred, y_true=None, beta=1, y_pred=None, pos_label=1):
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
-    Note: this implementation is restricted to the binary classification task.
 
     Parameters
     ----------
-    z_true : 1d array-like
+    z_true : array, shape = [n_bags] or [n_bags, n_classes]
         Ground truth (correct) labels for the bags.
-    z_pred : 1d array-like
-        Predicted labels, as returned by a classifier for the bags.
-    y_true : 1d array-like
+    z_pred : array, shape = [n_bags] or [n_bags, n_classes]
+         Predicted labels, as returned by a classifier for the bags.
+    y_true : array, shape = [n_instances] or [n_instances, n_classes]
         Ground truth (correct) labels for the instances.
-    y_pred : 1d array-like
-        Predicted labels, as returned by a classifier for the instances.
+    y_pred : array, shape = [n_instances] or [n_instances, n_classes]
+       Predicted labels, as returned by a classifier for the instances.
     beta: float, optional
         Weight of precision in harmonic mean.
+    labels : list, optional
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
     pos_label : str or int, 1 by default
-        The class to report.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
+                       'weighted']
+        This parameter is required for multiclass/multilabel targets.
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+    sample_weight_z : array-like, shape = [n_bags], optional
+        Sample weights of the bags.
+    sample_weight_y : array-like, shape = [n_instances], optional
+        Sample weights of the instances.
 
    Returns
    -------
@@ -171,14 +284,19 @@ def fbeta_score(z_true, z_pred, y_true=None, beta=1, y_pred=None, pos_label=1):
        F-beta score for the positive instances.
     """
 
-    fbeta_score_z = skl.metrics.fbeta_score(z_true, z_pred, beta=beta, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+    fbeta_score_z = skl.metrics.fbeta_score(z_true, z_pred, beta=beta,
+        labels=labels, pos_label=pos_label, average=average, sample_weight=None)
     if y_true is not None and y_pred is not None:
-        fbeta_score_y = skl.metrics.fbeta_score(y_true, y_pred, beta=beta, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+        fbeta_score_y = skl.metrics.fbeta_score(y_true, y_pred, beta=beta,
+            labels=labels, pos_label=pos_label, average=average,
+            sample_weight=None)
     else:
         fbeta_score_y = None
     return fbeta_score_z, fbeta_score_y
 
-def negative_predictive_value(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
+
+def negative_predictive_value(z_true, z_pred, y_true=None, y_pred=None,
+        pos_label=1):
     """
     Calculate negative predictive value (negative equivalent to precision).
     Note: this implementation is restricted to the binary classification task.
@@ -244,7 +362,9 @@ def negative_predictive_value(z_true, z_pred, y_true=None, y_pred=None, pos_labe
 
     return npv_z, npv_y
 
-def positive_predictive_value(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
+
+def positive_predictive_value(z_true, z_pred, y_true=None, y_pred=None,
+        pos_label=1):
     """
     Calculate positive predictive value (precision)
     Note: this implementation is restricted to the binary classification task.
@@ -311,7 +431,9 @@ def positive_predictive_value(z_true, z_pred, y_true=None, y_pred=None, pos_labe
 
     return ppv_z, ppv_y
 
-def precision_recall_curve(z_true, z_score, y_true=None, y_score=None, pos_label=1):
+
+def precision_recall_curve(z_true, z_score, y_true=None, y_score=None,
+        pos_label=1):
     """
     Compute precision-recall pairs for different probability thresholds
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -366,14 +488,15 @@ def precision_recall_curve(z_true, z_score, y_true=None, y_score=None, pos_label
         Increasing thresholds on the decision function used to compute
         precision and recall.
     """
-    pre_z, rec_z, thresholds_z = skl.metrics.precision_recall_curve(z_true, z_score,
-        pos_label=pos_label, sample_weight=None)
+    pre_z, rec_z, thresholds_z = skl.metrics.precision_recall_curve(z_true,
+        z_score, pos_label=pos_label, sample_weight=None)
     if y_true is not None and y_score is not None:
-        pre_y, rec_y, thresholds_y = skl.metrics.precision_recall_curve(z_true, z_score,
-            pos_label=pos_label, sample_weight=None)
+        pre_y, rec_y, thresholds_y = skl.metrics.precision_recall_curve(y_true,
+            y_score, pos_label=pos_label, sample_weight=None)
     else:
         pre_y = rec_y = thresholds_y = None
     return pre_z, rec_z, thresholds_z, pre_y, rec_y, thresholds_y
+
 
 def precision_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     """Compute the precision
@@ -404,12 +527,15 @@ def precision_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     precision_y : float
         Precision of the positive instances.
     """
-    pre_z = skl.metrics.precision_score(z_true, z_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+    pre_z = skl.metrics.precision_score(z_true, z_pred, labels=None,
+        pos_label=pos_label, average='binary', sample_weight=None)
     if y_true is not None and y_pred is not None:
-        pre_y = skl.metrics.precision_score(y_true, y_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+        pre_y = skl.metrics.precision_score(y_true, y_pred, labels=None,
+            pos_label=pos_label, average='binary', sample_weight=None)
     else:
         pre_y = None
     return pre_z, pre_y
+
 
 def recall_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     """
@@ -440,12 +566,15 @@ def recall_score(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     recall_y : float
         Recall of the positive class for the instances.
     """
-    rec_z = skl.metrics.precision_score(z_true, z_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+    rec_z = skl.metrics.precision_score(z_true, z_pred, labels=None,
+        pos_label=pos_label, average='binary', sample_weight=None)
     if y_true is not None and y_pred is not None:
-        rec_y = skl.metrics.recall_score(y_true, y_pred, labels=None, pos_label=pos_label, average='binary', sample_weight=None)
+        rec_y = skl.metrics.recall_score(y_true, y_pred, labels=None,
+            pos_label=pos_label, average='binary', sample_weight=None)
     else:
         rec_y = None
     return rec_z, rec_y
+
 
 def roc_auc_score(z_true, z_score, y_true=None, y_score=None):
     """
@@ -474,14 +603,18 @@ def roc_auc_score(z_true, z_score, y_true=None, y_score=None):
     auc_y : float
         ROC auc for the instances.
     """
-    auc_z = skl.metrics.roc_auc_score(z_true, z_score, average="macro", sample_weight=None)
+    auc_z = skl.metrics.roc_auc_score(z_true, z_score, average="macro",
+        sample_weight=None)
     if y_true is not None and y_score is not None:
-        auc_y = skl.metrics.roc_auc_score(y_true, y_score, average="macro", sample_weight=None)
+        auc_y = skl.metrics.roc_auc_score(y_true, y_score, average="macro",
+            sample_weight=None)
     else:
         auc_y = None
     return auc_z, auc_y
 
-def roc_curve(z_true, z_score, y_true=None, y_score=None, pos_label=1, drop_intermediate=True):
+
+def roc_curve(z_true, z_score, y_true=None, y_score=None, pos_label=1,
+        drop_intermediate=True):
     """
     Compute Receiver operating characteristic (ROC)
     Note: this implementation is restricted to the binary classification task.
@@ -538,12 +671,17 @@ def roc_curve(z_true, z_score, y_true=None, y_score=None, pos_label=1, drop_inte
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
     """
-    fpr_z, tpr_z, thresholds_z  = skl.metrics.roc_curve(z_true, z_score, pos_label=pos_label, sample_weight=None, drop_intermediate=drop_intermediate)
+    fpr_z, tpr_z, thresholds_z = skl.metrics.roc_curve(z_true, z_score,
+        pos_label=pos_label, sample_weight=None,
+        drop_intermediate=drop_intermediate)
     if y_true is not None and y_score is not None:
-        fpr_y, tpr_y, thresholds_y = skl.metrics.roc_curve(z_true, z_score, pos_label=pos_label, sample_weight=None, drop_intermediate=drop_intermediate)
+        fpr_y, tpr_y, thresholds_y = skl.metrics.roc_curve(y_true, y_score,
+            pos_label=pos_label, sample_weight=None,
+            drop_intermediate=drop_intermediate)
     else:
         fpr_y = tpr_y = thresholds_y = None
     return fpr_z, tpr_z, thresholds_z, fpr_y, tpr_y, thresholds_y
+
 
 def true_positive_rate(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     """
@@ -612,6 +750,7 @@ def true_positive_rate(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
 
     return tpr_z, tpr_y
 
+
 def true_negative_rate(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
     """
     Calculate true negative rate.
@@ -655,7 +794,6 @@ def true_negative_rate(z_true, z_pred, y_true=None, y_pred=None, pos_label=1):
         tnr_z = np.nan
     else:
         tnr_z = tn / (tn + fp)
-
 
     if y_true is not None and y_pred is not None:
         y_true1 = np.array(y_true) == pos_label
@@ -737,6 +875,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _PredictScorer
     return cls(score_func, sign, kwargs)
 
+
 def get_scorer(scoring):
     """
     Get a scorer named after the standard scores defined in here using default
@@ -757,22 +896,21 @@ def get_scorer(scoring):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
-            scorers = [scorer for scorer in SCORERS
-                       if SCORERS[scorer]._deprecation_msg is None]
+            scorers = [scorer for scorer in SCORERS if
+                SCORERS[scorer]._deprecation_msg is None]
             raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s'
-                             % (scoring, sorted(scorers)))
+                             'Valid options are %s' % (
+                                 scoring, sorted(scorers)))
     else:
         scorer = scoring
     return scorer
 
-class _PredictScorer():
 
+class _PredictScorer():
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-
 
     def __call__(self, estimator, data):
         """
@@ -792,15 +930,15 @@ class _PredictScorer():
             Score function applied to prediction of estimator on milData.
         """
         z_pred, y_pred = estimator.predict(data)
-        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred, **self._kwargs)
+        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred,
+            **self._kwargs)
+
 
 class _ProbaScorer():
-
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-
 
     def __call__(self, estimator, data):
         """
@@ -820,15 +958,15 @@ class _ProbaScorer():
             Score function applied to prediction of estimator on milData.
         """
         z_pred, y_pred = estimator.predict_proba(data)
-        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred, **self._kwargs)
+        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred,
+            **self._kwargs)
+
 
 class _ThresholdScorer():
-
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-
 
     def __call__(self, estimator, data):
         """
@@ -848,7 +986,8 @@ class _ThresholdScorer():
             Score function applied to prediction of estimator on milData.
         """
         z_pred, y_pred = estimator.decision_function(data)
-        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred, **self._kwargs)
+        return self._sign * self._score_func(data.z, z_pred, data.y, y_pred,
+            **self._kwargs)
 
 
 # Standard Classification Scores
@@ -863,19 +1002,16 @@ true_positive_scorer = make_scorer(true_positive_rate)
 true_negative_scorer = make_scorer(true_negative_rate)
 
 # Score functions that need decision values
-roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True, needs_threshold=True)
-average_precision_scorer = make_scorer(average_precision_score, needs_threshold=True)
-
+roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
+    needs_threshold=True)
+average_precision_scorer = make_scorer(average_precision_score,
+    needs_threshold=True)
 
 SCORERS = dict(accuracy_score=accuracy_scorer,
-    average_precision_score=average_precision_scorer,
-    f1_score=f1_score,
+    average_precision_score=average_precision_scorer, f1_score=f1_score,
     fbeta_score=fbeta_scorer,
     negative_predictive_value=negative_predictive_scorer,
     positive_predictive_value=positive_predictive_scorer,
-    precision_score=precision_scorer,
-    recall_score=recall_scorer,
+    precision_score=precision_scorer, recall_score=recall_scorer,
     roc_auc_score=roc_auc_scorer, true_positive_rate=true_positive_scorer,
     true_negative_rate=true_negative_scorer)
-
-
